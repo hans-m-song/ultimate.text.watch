@@ -24,86 +24,12 @@ var weather = {
   on_60: 59
 };
 
-
-var locationOptions = { "timeout": 150000, "maximumAge": 600000 };
-
-function fetchWeather(latitude, longitude) {
-  var curTime = Math.floor((new Date).getTime()/1000);
-  var lastFetch = localStorage.getItem("lastFetch");
-
-  if (isFetching) {
-    console.log("fetchWeather: already fetching, quit");
-    return;
-  }
-  else if (curTime - lastFetch < 900) {
-    console.log("fetchWeather: already fetched recently, quit");
-    return;
-  }
-  else {
-    isFetching = true;
-    console.log("fetchWeather: fetching now");
-
-    var response;
-    var req = new XMLHttpRequest();
-    req.open('GET', "http://api.openweathermap.org/data/2.5/find?" +
-               "lat=" + latitude + "&lon=" + longitude + "&cnt=1", true);
-    req.onload = function(e) {
-      if (req.readyState == 4) {
-        if(req.status == 200) {
-          console.log(req.responseText);
-          response = JSON.parse(req.responseText);
-          var temperatureC, temperatureF, icon, city;
-          if (response && response.list && response.list.length > 0) {
-            var weatherResult = response.list[0];
-            temperatureC = Math.round(weatherResult.main.temp - 273.15);
-            temperatureF = Math.round((weatherResult.main.temp*1.8) - 459.67);
-            icon = weatherResult.weather[0].main;
-            city = weatherResult.name;
-            console.log(temperatureC);
-            console.log(temperatureF);
-            console.log(icon);
-            console.log(city);
-            localStorage.setItem("lastFetch", curTime);
-            transmitConfiguration({
-              "icon":icon,
-              "temperatureC":"" + temperatureC+"\u00B0C",
-              "temperatureF":"" + temperatureF+"\u00B0F"
-              });
-          }
-        } else {
-          console.log("Error");
-        }
-      }
-    };
-    req.send(null);
-    isFetching = false;
-    console.log("fetchWeather: finished fetching, quit");
-  }
-}
-
-function locationSuccess(pos) {
-  var coordinates = pos.coords;
-  var datetime = "======= lastsync: " + new Date();
-  console.log(datetime);
-  if(!isFetching)fetchWeather(coordinates.latitude, coordinates.longitude);
-}
-
-function locationError(err) {
-  console.warn('location error (' + err.code + '): ' + err.message);
-  transmitConfiguration({
-    "icon":"no data",
-    "temperatureC":"01234",
-    "temperatureF":"01234"
-    });
-}
-
 function readyCallback(event) {
   isReady = true;
   var callback;
   while (callbacks.length > 0) {
     callback = callbacks.shift();
     callback(event);
-  window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
   }
 }
 
@@ -185,7 +111,6 @@ function onReady(callback) {
   }
 }
 
-Pebble.addEventListener("ready", readyCallback);
 Pebble.addEventListener("showConfiguration", showConfiguration);
 Pebble.addEventListener("webviewclosed", webviewclosed);
 Pebble.addEventListener("appmessage", appmessage);

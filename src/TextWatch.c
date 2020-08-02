@@ -92,7 +92,6 @@ static void display_time(struct tm *t);
 /////////////////////////////////////////////////ZECOJ/////////////////////////////////////////////////
 
 static Line lines[NUM_LINES];
-static InverterLayer *inverter_layer;
 
 static struct tm *t;
 
@@ -207,11 +206,6 @@ void bluetooth_connection_handler(bool connected) {
       bt_connect_toggle = false;
       vibes_short_pulse();
     }
-    layer_set_hidden(inverter_layer_get_layer(inverter_layer), bt_connect_toggle);
-  }
-  else {
-    //APP_LOG(APP_LOG_LEVEL_DEBUG, "I'm still here, just ignoring bluetooth events");
-    layer_set_hidden(inverter_layer_get_layer(inverter_layer), true);
   }
 }
 
@@ -264,7 +258,6 @@ static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tup
           //APP_LOG(APP_LOG_LEVEL_DEBUG, "re-subscribing");
           bluetooth_connection_service_subscribe(bluetooth_connection_handler);
           bt_connect_toggle = bluetooth_connection_service_peek();
-          layer_set_hidden(inverter_layer_get_layer(inverter_layer), bt_connect_toggle);
         }
         if (!bluetooth && bluetooth_old) {
           //APP_LOG(APP_LOG_LEVEL_DEBUG, "unsubscribing");
@@ -683,9 +676,6 @@ static void window_load(Window *window)
     //send_cmd();
 
   /////////////////////////////////////////////////ZECOJ/////////////////////////////////////////////////
-  inverter_layer = inverter_layer_create(bounds);
-  layer_set_hidden(inverter_layer_get_layer(inverter_layer), !invert);
-  layer_add_child(window_layer, inverter_layer_get_layer(inverter_layer));
   
   // Configure time on init
   time_t raw_time;
@@ -706,7 +696,6 @@ static void window_unload(Window *window)
   text_layer_destroy(topbar.layer[0]);
   text_layer_destroy(bottombarL.layer[0]);
   text_layer_destroy(bottombarR.layer[0]);
-  inverter_layer_destroy(inverter_layer);
 
   for (int i = 0; i < NUM_LINES; i++)
   {
@@ -774,7 +763,6 @@ static void handle_init() {
   if (bluetooth) {
     bluetooth_connection_service_subscribe(bluetooth_connection_handler);
     bt_connect_toggle = bluetooth_connection_service_peek();
-    layer_set_hidden(inverter_layer_get_layer(inverter_layer), bt_connect_toggle);
   }
 
   // Subscribe to shake events
